@@ -1,0 +1,87 @@
+---
+title: "Reproducible Research: Peer Assessment 2"
+Author: Shoven Shrivastava
+output:
+  html_document:
+    keep_md: true
+---
+
+
+## The basic objective of this assignment is to explore the NOAA Storm Database and answer some basic questions about severe weather events. We must use the database to answer the questions below and show the code for your entire analysis. 
+
+### Synopsis: Storms and other severe weather events can cause both public health and economic problems for communities and municipalities. Many severe events can result in fatalities, injuries, and property damage, and preventing such outcomes to the extent possible is a key concern. This project involves exploring the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database. This database tracks characteristics of major storms and weather events in the United States, including when and where they occur, as well as estimates of any fatalities, injuries, and property damage. 
+
+### Data Processing
+ 
+```{r}
+
+repdata <- read.csv("repdata-data-StormData.csv")
+head(repdata)
+ 
+ 
+```
+ 
+### subset the data to health and economic impact analysis against weather
+```{r}
+relevantcols <- c("EVTYPE", "FATALITIES", "INJURIES", "PROPDMG", "PROPDMGEXP", "CROPDMG", "CROPDMGEXP")
+stormdata <- repdata[relevantcols]
+```
+
+### Explore the data - Property damage data and crop damage data
+
+```{r}
+unique(stormdata$PROPDMGEXP)
+unique(stormdata$CROPDMGEXP)
+```
+
+#### Property Damage
+
+```{r}
+ 
+stormdata$PROPDMGEXP <- as.character(stormdata$PROPDMGEXP)
+stormdata$PROPDMGEXP[toupper(stormdata$PROPDMGEXP) == 'H'] <- "2"
+stormdata$PROPDMGEXP[toupper(stormdata$PROPDMGEXP) == 'K'] <- "3"
+stormdata$PROPDMGEXP[toupper(stormdata$PROPDMGEXP) == 'M'] <- "6"
+stormdata$PROPDMGEXP[toupper(stormdata$PROPDMGEXP) == 'B'] <- "9"
+stormdata$PROPDMGEXP <- as.numeric(stormdata$PROPDMGEXP)
+stormdata$PROPDMGEXP[is.na(stormdata$PROPDMGEXP)] <- 0
+stormdata$TOTALPROPDMG <- stormdata$PROPDMG * 10^stormdata$PROPDMGEXP
+ 
+```
+#### Crop Damage
+
+```{r}
+stormdata$CROPDMGEXP <- as.character(stormdata$CROPDMGEXP)
+stormdata$CROPDMGEXP[toupper(stormdata$CROPDMGEXP) == 'H'] <- "2"
+stormdata$CROPDMGEXP[toupper(stormdata$CROPDMGEXP) == 'K'] <- "3"
+stormdata$CROPDMGEXP[toupper(stormdata$CROPDMGEXP) == 'M'] <- "6"
+stormdata$CROPDMGEXP[toupper(stormdata$CROPDMGEXP) == 'B'] <- "9"
+stormdata$CROPDMGEXP <- as.numeric(stormdata$CROPDMGEXP)
+stormdata$CROPDMGEXP[is.na(stormdata$CROPDMGEXP)] <- 0
+stormdata$TOTALCROPDMG <- stormdata$CROPDMG * 10^stormdata$CROPDMGEXP
+ 
+```
+#### Fatalities and Injuries
+ 
+```{r}
+fatalities <- aggregate(stormdata$FATALITIES, by = list(stormdata$EVTYPE), "sum")
+names(fatalities) <- c("Event", "Fatalities")
+fatalities <- fatalities[order(-fatalities$Fatalities), ][1:10, ]
+##fatalities
+ 
+injuries <- aggregate(stormdata$INJURIES, by = list(stormdata$EVTYPE), "sum")
+names(injuries) <- c("Event", "Injuries")
+injuries <- injuries[order(-injuries$Injuries), ][1:10, ]
+##suminjuries
+ 
+```
+### Results of Analysis
+
+```{r}
+
+par(mfrow = c(1, 2), mar = c(12, 5, 3, 2), mgp = c(3, 1, 0), cex = 0.8, las = 3)
+barplot(fatalities$Fatalities, names.arg = fatalities$Event, col = 'green',
+        main = 'Weather Events for Fatalities', ylab = 'Fatalities')
+barplot(injuries$Injuries, names.arg = injuries$Event, col = 'red',
+        main = 'Weather Events for Injuries', ylab = 'Injuries')
+```
